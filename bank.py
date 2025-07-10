@@ -51,7 +51,8 @@ class Bank:
             print("3. Withdraw Money")
             print("4. Transfer Money")
             print("5. View Account Details")
-            print("6. Logout")
+            print("6. Compare with Other Accounts")
+            print("7. Logout")
 
             try:
                 choice = int(input("Enter your choice: "))
@@ -70,6 +71,8 @@ class Bank:
             elif choice == 5:
                 self.viewDetails()
             elif choice == 6:
+                self.compareAccounts()
+            elif choice == 7:
                 print("Logging out...")
                 self.logged_in_account = None
                 break
@@ -85,6 +88,10 @@ class Bank:
             phone = input("Enter your phone number: ")
             password = input("Set your password: ")
             account_type = input("Enter account type (Savings / Current): ")
+            if account_type.lower() not in ["savings", "current"]:
+                while account_type.lower() not in ["savings", "current"]:
+                    print("Account type can only be Savings or Current")
+                    account_type = input("Enter account type (Savings / Current): ")
             balance = float(input("Enter your opening balance: "))
 
             self.cursor.execute("SELECT MAX(account_number) FROM accounts")
@@ -290,6 +297,40 @@ class Bank:
             print("Invalid input. Please enter numbers only.")
         except Exception as e:
             print("Error during transfer:", e)
+
+    def compareAccounts(self):
+        try:
+            if self.logged_in_account is None:
+                print("You must be logged in to Compare Accounts.")
+                return
+            other_acc_number = input("Enter the account number to compare with: ")
+
+            self.cursor.execute("SELECT balance FROM accounts WHERE account_number = %s", (self.logged_in_account,))
+            my_result = self.cursor.fetchone()
+
+            self.cursor.execute("SELECT balance FROM accounts WHERE account_number = %s", (other_acc_number,))
+            other_result = self.cursor.fetchone()
+
+            if not other_result:
+                print("The account number you're comparing with does not exist.")
+                return
+
+            my_balance = my_result[0]
+            other_balance = other_result[0]
+
+            print(f"\nYour Balance  : {my_balance}")
+            print(f"Other Account Balance (Acc {other_acc_number}): {other_balance}")
+
+            if my_balance > other_balance:
+                print("Your account is bigger. ")
+            elif my_balance < other_balance:
+                print("Your account is smaller.")
+            else:
+                print("⚖ Both accounts have equal balance.")
+
+        except Exception as e:
+            print("Error while comparing accounts:", e)
+
 
 if __name__ == '__main__':
     bank = Bank()
