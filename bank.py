@@ -50,7 +50,8 @@ class Bank:
             print("2. Deposit Money")
             print("3. Withdraw Money")
             print("4. Transfer Money")
-            print("5. Logout")
+            print("5. View Account Details")
+            print("6. Logout")
 
             try:
                 choice = int(input("Enter your choice: "))
@@ -67,6 +68,8 @@ class Bank:
             elif choice == 4:
                 self.TransferBalance()
             elif choice == 5:
+                self.viewDetails()
+            elif choice == 6:
                 print("Logging out...")
                 self.logged_in_account = None
                 break
@@ -86,7 +89,11 @@ class Bank:
 
             self.cursor.execute("SELECT MAX(account_number) FROM accounts")
             result = self.cursor.fetchone()
-            prev_acc_number = result[0] if result[0] is not None else 0
+            if result[0] is None:
+                prev_acc_number = 0
+            else:
+                prev_acc_number = result[0]
+
             new_account_number = prev_acc_number + 1
 
             self.cursor.execute("""
@@ -122,6 +129,30 @@ class Bank:
 
         except Exception as e:
             print("Error during login:", e)
+
+    def viewDetails(self):
+        try:
+            if self.logged_in_account is None:
+                print("You must be logged in to view details.")
+                return
+
+            self.cursor.execute("""
+                SELECT name, account_number, account_type, balance
+                FROM accounts
+                WHERE account_number = %s
+            """, (self.logged_in_account,))
+            result = self.cursor.fetchone()
+
+            if result:
+                print("\n--- Account Details ---")
+                print(f"Name           : {result[0]}")
+                print(f"Account Number : {result[1]}")
+                print(f"Account Type   : {result[2]}")
+                print(f"Balance        : Rs. {result[3]:,.2f}")
+            else:
+                print("Account not found.")
+        except Exception as e:
+            print("Error fetching account details:", e)
 
     def checkBalance(self):
         try:
